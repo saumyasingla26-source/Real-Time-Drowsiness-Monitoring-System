@@ -1,4 +1,4 @@
-from playsound import playsound
+import winsound
 
 class AlarmSystem:
     """
@@ -12,7 +12,7 @@ class AlarmSystem:
     def play(self):
         try:
             self.active = True
-            playsound(self.file)
+            winsound.PlaySound(self.file, winsound.SND_FILENAME)
         except:
             print("Alarm failed")
         finally:
