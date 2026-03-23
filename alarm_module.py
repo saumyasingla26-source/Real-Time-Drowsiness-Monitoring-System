@@ -1,24 +1,35 @@
 import winsound
+import threading
 
 class AlarmSystem:
-    """
-    Handles alarm triggering and control.
-    """
+    def _init_(self):
+        # MUST be defined here
+        self.is_on = False
 
-    def __init__(self, file="alarm.mp3"):
-        self.file = file
-        self.active = False
-
-    def play(self):
+    def _beep(self):
+        """Internal function to play sound"""
         try:
-            self.active = True
-            winsound.PlaySound(self.file, winsound.SND_FILENAME)
+            for _ in range(3):
+                winsound.Beep(1000, 500)
         except:
-            print("Alarm failed")
-        finally:
-            self.active = False
+            print("Sound error")
 
-    def trigger(self):
-        if not self.active:
-            print("ALERT: Drowsiness detected")
-            self.play()
+    def ring_alarm(self):
+        """Trigger alarm safely"""
+        try:
+            if not hasattr(self, 'is_on'):
+                self.is_on = False   # safety fix
+
+            if not self.is_on:
+                self.is_on = True
+                print("🚨 DROWSINESS ALERT!")
+
+                # run in background thread
+                t = threading.Thread(target=self._beep)
+                t.daemon = True
+                t.start()
+
+                self.is_on = False
+
+        except Exception as e:
+            print("Alarm error:", e)
