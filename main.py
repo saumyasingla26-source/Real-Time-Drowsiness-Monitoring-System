@@ -14,14 +14,14 @@ db = DatabaseManager()
 # Start camera
 camera.start_camera()
 
-print("System Started... Press ESC to exit")
+print("System Started... Press ESC or Q to exit")
 
 # Main loop
 while camera.is_running():
     try:
         frame = camera.read_frame()
 
-        # If frame not captured, skip instead of closing
+        # Skip if frame not captured
         if frame is None:
             continue
 
@@ -32,9 +32,9 @@ while camera.is_running():
         # Eye detection
         landmarks, left_eye, right_eye = eye.process(frame)
 
-        # If detection fails, continue safely
+        # If face not detected
         if left_eye is None or right_eye is None:
-            camera.draw_text(frame, "Face not detected", (20, 40))
+            camera.draw_text(frame, "Face Not Detected", (20, 40), (0, 165, 255))  # ORANGE
             camera.display_frame(frame)
             continue
 
@@ -42,21 +42,26 @@ while camera.is_running():
         ear = logic.average_ear(left_eye, right_eye)
         drowsy = logic.check_drowsiness(ear)
 
-        status = "DROWSY" if drowsy else "AWAKE"
+        # Set status and color
+        if drowsy:
+            status = "DROWSY"
+            color = (0, 0, 255)   # RED
+        else:
+            status = "AWAKE"
+            color = (0, 255, 0)   # GREEN
 
-        # Display info
-        camera.draw_text(frame, f"Status: {status}", (20, 40))
-        camera.draw_text(frame, f"EAR: {round(ear, 3)}", (20, 80))
+        # Display status & EAR
+        camera.draw_text(frame, f"Status: {status}", (20, 40), color)
+        camera.draw_text(frame, f"EAR: {round(ear, 3)}", (20, 80), (255, 255, 255))
 
-        # Draw eye points
+        # Draw eye landmarks
         eye.draw_eye_points(frame, left_eye)
         eye.draw_eye_points(frame, right_eye)
 
-        # Alarm trigger
+        # Alarm + Database
         if drowsy:
             alarm.ring_alarm()
 
-            # Safe database insert
             try:
                 db.insert_record(ear, status)
             except Exception as e:
